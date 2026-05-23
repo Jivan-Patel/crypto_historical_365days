@@ -1,6 +1,7 @@
 const express = require('express');
 const cors = require('cors');
 const authRoutes = require('./routes/auth.routes');
+const coinRoutes = require('./routes/coin.routes');
 
 const app = express();
 
@@ -9,6 +10,7 @@ app.use(express.json());
 
 // API routes
 app.use('/auth', authRoutes);
+app.use('/coins', coinRoutes);
 
 // Health check
 app.get('/health', (req, res) => res.json({ success: true, status: 'ok' }));
