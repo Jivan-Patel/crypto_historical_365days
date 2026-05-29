@@ -34,5 +34,10 @@ coinSchema.index({ coin_id: 1, date: 1 }, { unique: true, partialFilterExpressio
 coinSchema.index({ symbol: 1, date: -1 });
 coinSchema.index({ date: -1 });
 coinSchema.index({ market_cap_rank: 1 });
+coinSchema.index({ coin_id: 1, timestamp: -1 });
+coinSchema.index({ timestamp: -1 });
+coinSchema.index({ market_cap: -1 });
+coinSchema.index({ volume: -1 });
+coinSchema.index({ daily_return: 1 });
 
 module.exports = mongoose.model('Coin', coinSchema);
