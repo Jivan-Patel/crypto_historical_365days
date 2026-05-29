@@ -11,5 +11,9 @@ router.get('/', coinController.getAllCoins);
 router.post('/', authMiddleware, coinController.createCoin);
 router.put('/:id', authMiddleware, coinController.updateCoin);
 router.patch('/:id', authMiddleware, coinController.patchCoin);
+// Bulk operations and delete
+router.post('/bulk-create', authMiddleware, coinController.bulkCreate);
+router.patch('/bulk-update', authMiddleware, coinController.bulkUpdate);
+router.delete('/:id', authMiddleware, coinController.deleteCoin);
 
 module.exports = router;
