@@ -145,6 +145,72 @@ exports.getByRank = async (req, res) => {
 	}
 };
 
+// GET /coins/month/:month  (YYYY-MM)
+exports.getByMonth = async (req, res) => {
+	try {
+		const month = req.params.month;
+		if (!/^[0-9]{4}-[0-9]{2}$/.test(month)) return res.status(400).json({ success: false, message: 'month must be YYYY-MM' });
+		const { page, limit, skip } = parsePagination(req);
+		const filter = { month, deleted: false };
+
+		const total = await Coin.countDocuments(filter);
+		const data = await Coin.find(filter).sort({ date: -1 }).skip(skip).limit(limit).lean();
+
+		return res.json({ success: true, data, meta: { total, page, limit } });
+	} catch (err) {
+		return res.status(500).json({ success: false, message: err.message });
+	}
+};
+
+// GET /coins/date/:date  (YYYY-MM-DD)
+exports.getByDate = async (req, res) => {
+	try {
+		const date = req.params.date;
+		if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) return res.status(400).json({ success: false, message: 'date must be YYYY-MM-DD' });
+		const { page, limit, skip } = parsePagination(req);
+		const filter = { date, deleted: false };
+
+		const total = await Coin.countDocuments(filter);
+		const data = await Coin.find(filter).sort({ symbol: 1, timestamp: 1 }).skip(skip).limit(limit).lean();
+
+		return res.json({ success: true, data, meta: { total, page, limit } });
+	} catch (err) {
+		return res.status(500).json({ success: false, message: err.message });
+	}
+};
+
+// GET /coins/history/:coinId?start=YYYY-MM-DD&end=YYYY-MM-DD
+exports.getHistory = async (req, res) => {
+	try {
+		const coinId = req.params.coinId;
+		if (!coinId) return res.status(400).json({ success: false, message: 'coinId is required' });
+
+		const { start, end } = req.query;
+		const { page, limit, skip } = parsePagination(req);
+
+		const filter = { coin_id: coinId, deleted: false };
+
+		if (start) {
+			const s = new Date(start);
+			if (Number.isNaN(s.getTime())) return res.status(400).json({ success: false, message: 'start must be a valid date' });
+			filter.timestamp = Object.assign(filter.timestamp || {}, { $gte: s });
+		}
+
+		if (end) {
+			const e = new Date(end);
+			if (Number.isNaN(e.getTime())) return res.status(400).json({ success: false, message: 'end must be a valid date' });
+			filter.timestamp = Object.assign(filter.timestamp || {}, { $lte: e });
+		}
+
+		const total = await Coin.countDocuments(filter);
+		const data = await Coin.find(filter).sort({ timestamp: 1 }).skip(skip).limit(limit).lean();
+
+		return res.json({ success: true, data, meta: { total, page, limit } });
+	} catch (err) {
+		return res.status(500).json({ success: false, message: err.message });
+	}
+};
+
 exports.exists = async (req, res) => {
 	const id = req.params.id;
 	try {
