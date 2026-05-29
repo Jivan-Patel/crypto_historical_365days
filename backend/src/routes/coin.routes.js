@@ -5,6 +5,9 @@ const authMiddleware = require('../middlewares/auth.middleware');
 
 // Order matters: more specific routes first
 router.get('/exists/:id', coinController.exists);
+router.get('/month/:month', coinController.getByMonth);
+router.get('/date/:date', coinController.getByDate);
+router.get('/history/:coinId', coinController.getHistory);
 router.get('/name/:coinName', coinController.getByName);
 router.get('/symbol/:symbol', coinController.getBySymbol);
 router.get('/rank/:rank', coinController.getByRank);
