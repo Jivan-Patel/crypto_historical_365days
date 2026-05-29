@@ -4,6 +4,9 @@ const coinController = require('../controllers/coin.controller');
 const authMiddleware = require('../middlewares/auth.middleware');
 
 // Order matters: more specific routes first
+router.get('/top-losers', coinController.getTopLosers);
+router.get('/trending', coinController.getTrending);
+router.get('/latest', coinController.getLatest);
 router.get('/top-market-cap', coinController.getTopMarketCap);
 router.get('/top-volume', coinController.getTopVolume);
 router.get('/top-gainers', coinController.getTopGainers);

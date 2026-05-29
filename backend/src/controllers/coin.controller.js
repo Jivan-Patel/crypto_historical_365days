@@ -104,14 +104,14 @@ const parseLeaderboardPagination = (req) => {
 	return { page, limit, skip };
 };
 
-const buildLatestCoinLeaderboard = async (sortField, sortDirection = -1, req) => {
+const buildLatestCoinLeaderboard = async (sortSpec, req) => {
 	const { page, limit, skip } = parseLeaderboardPagination(req);
 	const pipeline = [
 		{ $match: { deleted: false } },
 		{ $sort: { coin_id: 1, timestamp: -1 } },
 		{ $group: { _id: '$coin_id', doc: { $first: '$$ROOT' } } },
 		{ $replaceRoot: { newRoot: '$doc' } },
-		{ $sort: { [sortField]: sortDirection, coin_name: 1, coin_id: 1 } },
+		{ $sort: sortSpec },
 		{
 			$facet: {
 				data: [{ $skip: skip }, { $limit: limit }],
@@ -241,7 +241,7 @@ exports.getHistory = async (req, res) => {
 
 exports.getTopMarketCap = async (req, res) => {
 	try {
-		const { data, meta } = await buildLatestCoinLeaderboard('market_cap', -1, req);
+		const { data, meta } = await buildLatestCoinLeaderboard({ market_cap: -1, coin_name: 1, coin_id: 1 }, req);
 		return res.json({ success: true, data, meta });
 	} catch (err) {
 		return res.status(500).json({ success: false, message: err.message });
@@ -250,7 +250,7 @@ exports.getTopMarketCap = async (req, res) => {
 
 exports.getTopVolume = async (req, res) => {
 	try {
-		const { data, meta } = await buildLatestCoinLeaderboard('volume', -1, req);
+		const { data, meta } = await buildLatestCoinLeaderboard({ volume: -1, coin_name: 1, coin_id: 1 }, req);
 		return res.json({ success: true, data, meta });
 	} catch (err) {
 		return res.status(500).json({ success: false, message: err.message });
@@ -259,7 +259,34 @@ exports.getTopVolume = async (req, res) => {
 
 exports.getTopGainers = async (req, res) => {
 	try {
-		const { data, meta } = await buildLatestCoinLeaderboard('daily_return', -1, req);
+		const { data, meta } = await buildLatestCoinLeaderboard({ daily_return: -1, coin_name: 1, coin_id: 1 }, req);
+		return res.json({ success: true, data, meta });
+	} catch (err) {
+		return res.status(500).json({ success: false, message: err.message });
+	}
+};
+
+exports.getTopLosers = async (req, res) => {
+	try {
+		const { data, meta } = await buildLatestCoinLeaderboard({ daily_return: 1, coin_name: 1, coin_id: 1 }, req);
+		return res.json({ success: true, data, meta });
+	} catch (err) {
+		return res.status(500).json({ success: false, message: err.message });
+	}
+};
+
+exports.getTrending = async (req, res) => {
+	try {
+		const { data, meta } = await buildLatestCoinLeaderboard({ volume: -1, daily_return: -1, market_cap: -1, coin_name: 1, coin_id: 1 }, req);
+		return res.json({ success: true, data, meta });
+	} catch (err) {
+		return res.status(500).json({ success: false, message: err.message });
+	}
+};
+
+exports.getLatest = async (req, res) => {
+	try {
+		const { data, meta } = await buildLatestCoinLeaderboard({ timestamp: -1, coin_name: 1, coin_id: 1 }, req);
 		return res.json({ success: true, data, meta });
 	} catch (err) {
 		return res.status(500).json({ success: false, message: err.message });
