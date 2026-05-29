@@ -141,15 +141,29 @@ const parseAdvancedCoinFilters = (query) => {
 	return filter;
 };
 
+const escapeRegExp = (value) => String(value).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
+const buildSearchClause = (search) => {
+	const term = String(search || '').trim();
+	if (!term) return null;
+	const escaped = escapeRegExp(term);
+	return {
+		$or: [
+			{ coin_name: new RegExp(escaped, 'i') },
+			{ coin_id: new RegExp(escaped, 'i') },
+			{ symbol: new RegExp(`^${escaped}$`, 'i') }
+		]
+	};
+};
+
 exports.getAllCoins = async (req, res) => {
 	try {
 		const { page, limit, skip } = getPagination(req.query);
 
 		const filter = parseAdvancedCoinFilters(req.query);
-		const { search } = req.query;
-		if (search) {
-			const re = new RegExp(search, 'i');
-			filter.$or = [ { coin_name: re }, { coin_id: re }, { symbol: re } ];
+		const searchClause = buildSearchClause(req.query.search);
+		if (searchClause) {
+			Object.assign(filter, searchClause);
 		}
 
 		const sort = parseSortParam(req.query.sort, 'date', -1, ['date', 'price', 'market_cap', 'volume', 'daily_return', 'timestamp', 'market_cap_rank']);
