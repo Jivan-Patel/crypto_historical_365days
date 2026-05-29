@@ -278,3 +278,27 @@ exports.bulkUpdate = async (req, res) => {
 		return res.status(500).json({ success: false, message: err.message });
 	}
 };
+
+// Bulk delete (soft-delete) coins. Accepts array of coin_ids or { ids: [...] }
+exports.bulkDelete = async (req, res) => {
+	try {
+		if (!req.user || req.user.role !== 'admin') {
+			return res.status(403).json({ success: false, message: 'Admin role required' });
+		}
+
+		const ids = Array.isArray(req.body) ? req.body : (Array.isArray(req.body.ids) ? req.body.ids : null);
+		if (!ids || ids.length === 0) return res.status(400).json({ success: false, message: 'No ids provided' });
+
+		if (ids.length > 5000) return res.status(400).json({ success: false, message: 'Too many ids in one request (limit 5000)' });
+
+		const result = await Coin.updateMany({ coin_id: { $in: ids }, deleted: false }, { $set: { deleted: true } });
+
+		// Normalize result fields across mongoose versions
+		const matched = result.matchedCount || result.n || 0;
+		const modified = result.modifiedCount || result.nModified || 0;
+
+ 		return res.json({ success: true, data: { requested: ids.length, matched, modified, notFound: ids.length - matched } });
+	} catch (err) {
+		return res.status(500).json({ success: false, message: err.message });
+	}
+};
