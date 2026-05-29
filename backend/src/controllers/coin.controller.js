@@ -89,6 +89,62 @@ exports.getCoinById = async (req, res) => {
 	}
 };
 
+// Helper to parse pagination params
+const parsePagination = (req) => {
+	const page = Math.max(1, parseInt(req.query.page, 10) || 1);
+ 	const limit = Math.min(100, Math.max(1, parseInt(req.query.limit, 10) || 20));
+ 	const skip = (page - 1) * limit;
+ 	return { page, limit, skip };
+};
+
+exports.getByName = async (req, res) => {
+	try {
+		const { coinName } = req.params;
+		const { page, limit, skip } = parsePagination(req);
+		const re = new RegExp(coinName, 'i'); // case-insensitive
+		const filter = { coin_name: re, deleted: false };
+
+		const total = await Coin.countDocuments(filter);
+		const data = await Coin.find(filter).sort({ date: -1 }).skip(skip).limit(limit).lean();
+
+		return res.json({ success: true, data, meta: { total, page, limit } });
+	} catch (err) {
+		return res.status(500).json({ success: false, message: err.message });
+	}
+};
+
+exports.getBySymbol = async (req, res) => {
+	try {
+		const { symbol } = req.params;
+		const { page, limit, skip } = parsePagination(req);
+		const re = new RegExp(`^${symbol}$`, 'i');
+		const filter = { symbol: re, deleted: false };
+
+		const total = await Coin.countDocuments(filter);
+		const data = await Coin.find(filter).sort({ date: -1 }).skip(skip).limit(limit).lean();
+
+		return res.json({ success: true, data, meta: { total, page, limit } });
+	} catch (err) {
+		return res.status(500).json({ success: false, message: err.message });
+	}
+};
+
+exports.getByRank = async (req, res) => {
+	try {
+		const rank = Number(req.params.rank);
+		if (Number.isNaN(rank)) return res.status(400).json({ success: false, message: 'rank must be a number' });
+		const { page, limit, skip } = parsePagination(req);
+		const filter = { market_cap_rank: rank, deleted: false };
+
+		const total = await Coin.countDocuments(filter);
+		const data = await Coin.find(filter).sort({ date: -1 }).skip(skip).limit(limit).lean();
+
+		return res.json({ success: true, data, meta: { total, page, limit } });
+	} catch (err) {
+		return res.status(500).json({ success: false, message: err.message });
+	}
+};
+
 exports.exists = async (req, res) => {
 	const id = req.params.id;
 	try {
