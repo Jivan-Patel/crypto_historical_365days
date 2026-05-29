@@ -104,6 +104,13 @@ const parseLeaderboardPagination = (req) => {
 	return { page, limit, skip };
 };
 
+const parseWindowPagination = (req) => {
+	const page = Math.max(1, parseInt(req.query.page, 10) || 1);
+	const limit = Math.min(100, Math.max(1, parseInt(req.query.limit, 10) || 20));
+	const skip = (page - 1) * limit;
+	return { page, limit, skip };
+};
+
 const buildLatestCoinLeaderboard = async (sortSpec, req) => {
 	const { page, limit, skip } = parseLeaderboardPagination(req);
 	const pipeline = [
@@ -287,6 +294,60 @@ exports.getTrending = async (req, res) => {
 exports.getLatest = async (req, res) => {
 	try {
 		const { data, meta } = await buildLatestCoinLeaderboard({ timestamp: -1, coin_name: 1, coin_id: 1 }, req);
+		return res.json({ success: true, data, meta });
+	} catch (err) {
+		return res.status(500).json({ success: false, message: err.message });
+	}
+};
+
+const buildDatasetWindow = async (req, sortSpec, options = {}) => {
+	const { page, limit, skip } = parseWindowPagination(req);
+	const pipeline = [{ $match: { deleted: false } }];
+
+	if (options.dedupeByCoin) {
+		pipeline.push(
+			{ $sort: { coin_id: 1, timestamp: options.oldest ? 1 : -1 } },
+			{ $group: { _id: '$coin_id', doc: { $first: '$$ROOT' } } },
+			{ $replaceRoot: { newRoot: '$doc' } }
+		);
+	}
+
+	pipeline.push(
+		{ $sort: sortSpec },
+		{
+			$facet: {
+				data: [{ $skip: skip }, { $limit: limit }],
+				meta: [{ $count: 'total' }]
+			}
+		}
+	);
+
+	const [result = { data: [], meta: [] }] = await Coin.aggregate(pipeline);
+	const total = result.meta[0] ? result.meta[0].total : 0;
+	return { data: result.data, meta: { total, page, limit } };
+};
+
+exports.getRecent = async (req, res) => {
+	try {
+		const { data, meta } = await buildDatasetWindow(req, { timestamp: -1, coin_name: 1, coin_id: 1 });
+		return res.json({ success: true, data, meta });
+	} catch (err) {
+		return res.status(500).json({ success: false, message: err.message });
+	}
+};
+
+exports.getOldest = async (req, res) => {
+	try {
+		const { data, meta } = await buildDatasetWindow(req, { timestamp: 1, coin_name: 1, coin_id: 1 });
+		return res.json({ success: true, data, meta });
+	} catch (err) {
+		return res.status(500).json({ success: false, message: err.message });
+	}
+};
+
+exports.getNewest = async (req, res) => {
+	try {
+		const { data, meta } = await buildDatasetWindow(req, { timestamp: -1, coin_name: 1, coin_id: 1 }, { dedupeByCoin: true });
 		return res.json({ success: true, data, meta });
 	} catch (err) {
 		return res.status(500).json({ success: false, message: err.message });
