@@ -54,6 +54,34 @@ const buildCoinPayload = (body, isPatch = false) => {
 	return payload;
 };
 
+const getPagination = (query, defaultLimit = 20, maxLimit = 100) => {
+	const page = Math.max(1, parseInt(query.page, 10) || 1);
+	const limit = Math.min(maxLimit, Math.max(1, parseInt(query.limit, 10) || defaultLimit));
+	const skip = (page - 1) * limit;
+	return { page, limit, skip };
+};
+
+const parseSortParam = (value, defaultField = 'date', defaultDirection = -1, allowedFields = ['date']) => {
+	if (!value) {
+		return { [defaultField]: defaultDirection, coin_id: 1 };
+	}
+
+	const raw = String(value).trim();
+	const [fieldPart, directionPart] = raw.split(':');
+	const field = fieldPart || defaultField;
+	if (!allowedFields.includes(field)) {
+		throw new Error(`sort field must be one of: ${allowedFields.join(', ')}`);
+	}
+
+	const direction = String(directionPart || '').toLowerCase();
+	const order = direction === 'asc' || direction === '1' ? 1 : direction === 'desc' || direction === '-1' || direction === '' ? -1 : null;
+	if (order === null) {
+		throw new Error('sort direction must be asc or desc');
+	}
+
+	return { [field]: order, coin_id: 1 };
+};
+
 const parseAdvancedCoinFilters = (query) => {
 	const filter = { deleted: false };
 
@@ -115,9 +143,7 @@ const parseAdvancedCoinFilters = (query) => {
 
 exports.getAllCoins = async (req, res) => {
 	try {
-		const page = Math.max(1, parseInt(req.query.page, 10) || 1);
-		const limit = Math.min(100, Math.max(1, parseInt(req.query.limit, 10) || 20));
-		const skip = (page - 1) * limit;
+		const { page, limit, skip } = getPagination(req.query);
 
 		const filter = parseAdvancedCoinFilters(req.query);
 		const { search } = req.query;
@@ -126,8 +152,10 @@ exports.getAllCoins = async (req, res) => {
 			filter.$or = [ { coin_name: re }, { coin_id: re }, { symbol: re } ];
 		}
 
+		const sort = parseSortParam(req.query.sort, 'date', -1, ['date', 'price', 'market_cap', 'volume', 'daily_return', 'timestamp', 'market_cap_rank']);
+
 		const total = await Coin.countDocuments(filter);
-		const data = await Coin.find(filter).sort({ date: -1 }).skip(skip).limit(limit).lean();
+		const data = await Coin.find(filter).sort(sort).skip(skip).limit(limit).lean();
 
 		return res.json({ success: true, data, meta: { total, page, limit } });
 	} catch (err) {
@@ -147,24 +175,13 @@ exports.getCoinById = async (req, res) => {
 };
 
 // Helper to parse pagination params
-const parsePagination = (req) => {
-	const page = Math.max(1, parseInt(req.query.page, 10) || 1);
- 	const limit = Math.min(100, Math.max(1, parseInt(req.query.limit, 10) || 20));
- 	const skip = (page - 1) * limit;
- 	return { page, limit, skip };
-};
-
 const parseLeaderboardPagination = (req) => {
-	const page = Math.max(1, parseInt(req.query.page, 10) || 1);
-	const limit = Math.min(100, Math.max(1, parseInt(req.query.limit, 10) || 10));
-	const skip = (page - 1) * limit;
+	const { page, limit, skip } = getPagination(req.query, 10, 100);
 	return { page, limit, skip };
 };
 
 const parseWindowPagination = (req) => {
-	const page = Math.max(1, parseInt(req.query.page, 10) || 1);
-	const limit = Math.min(100, Math.max(1, parseInt(req.query.limit, 10) || 20));
-	const skip = (page - 1) * limit;
+	const { page, limit, skip } = getPagination(req.query, 20, 100);
 	return { page, limit, skip };
 };
 
@@ -192,7 +209,7 @@ const buildLatestCoinLeaderboard = async (sortSpec, req) => {
 exports.getByName = async (req, res) => {
 	try {
 		const { coinName } = req.params;
-		const { page, limit, skip } = parsePagination(req);
+		const { page, limit, skip } = getPagination(req.query, 20, 100);
 		const re = new RegExp(coinName, 'i'); // case-insensitive
 		const filter = { coin_name: re, deleted: false };
 
@@ -208,7 +225,7 @@ exports.getByName = async (req, res) => {
 exports.getBySymbol = async (req, res) => {
 	try {
 		const { symbol } = req.params;
-		const { page, limit, skip } = parsePagination(req);
+		const { page, limit, skip } = getPagination(req.query, 20, 100);
 		const re = new RegExp(`^${symbol}$`, 'i');
 		const filter = { symbol: re, deleted: false };
 
@@ -225,7 +242,7 @@ exports.getByRank = async (req, res) => {
 	try {
 		const rank = Number(req.params.rank);
 		if (Number.isNaN(rank)) return res.status(400).json({ success: false, message: 'rank must be a number' });
-		const { page, limit, skip } = parsePagination(req);
+		const { page, limit, skip } = getPagination(req.query, 20, 100);
 		const filter = { market_cap_rank: rank, deleted: false };
 
 		const total = await Coin.countDocuments(filter);
@@ -242,7 +259,7 @@ exports.getByMonth = async (req, res) => {
 	try {
 		const month = req.params.month;
 		if (!/^[0-9]{4}-[0-9]{2}$/.test(month)) return res.status(400).json({ success: false, message: 'month must be YYYY-MM' });
-		const { page, limit, skip } = parsePagination(req);
+		const { page, limit, skip } = getPagination(req.query, 20, 100);
 		const filter = { month, deleted: false };
 
 		const total = await Coin.countDocuments(filter);
@@ -259,7 +276,7 @@ exports.getByDate = async (req, res) => {
 	try {
 		const date = req.params.date;
 		if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) return res.status(400).json({ success: false, message: 'date must be YYYY-MM-DD' });
-		const { page, limit, skip } = parsePagination(req);
+		const { page, limit, skip } = getPagination(req.query, 20, 100);
 		const filter = { date, deleted: false };
 
 		const total = await Coin.countDocuments(filter);
@@ -278,7 +295,7 @@ exports.getHistory = async (req, res) => {
 		if (!coinId) return res.status(400).json({ success: false, message: 'coinId is required' });
 
 		const { start, end } = req.query;
-		const { page, limit, skip } = parsePagination(req);
+		const { page, limit, skip } = getPagination(req.query, 20, 100);
 
 		const filter = { coin_id: coinId, deleted: false };
 
