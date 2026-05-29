@@ -97,6 +97,34 @@ const parsePagination = (req) => {
  	return { page, limit, skip };
 };
 
+const parseLeaderboardPagination = (req) => {
+	const page = Math.max(1, parseInt(req.query.page, 10) || 1);
+	const limit = Math.min(100, Math.max(1, parseInt(req.query.limit, 10) || 10));
+	const skip = (page - 1) * limit;
+	return { page, limit, skip };
+};
+
+const buildLatestCoinLeaderboard = async (sortField, sortDirection = -1, req) => {
+	const { page, limit, skip } = parseLeaderboardPagination(req);
+	const pipeline = [
+		{ $match: { deleted: false } },
+		{ $sort: { coin_id: 1, timestamp: -1 } },
+		{ $group: { _id: '$coin_id', doc: { $first: '$$ROOT' } } },
+		{ $replaceRoot: { newRoot: '$doc' } },
+		{ $sort: { [sortField]: sortDirection, coin_name: 1, coin_id: 1 } },
+		{
+			$facet: {
+				data: [{ $skip: skip }, { $limit: limit }],
+				meta: [{ $count: 'total' }]
+			}
+		}
+	];
+
+	const [result = { data: [], meta: [] }] = await Coin.aggregate(pipeline);
+	const total = result.meta[0] ? result.meta[0].total : 0;
+	return { data: result.data, meta: { total, page, limit } };
+};
+
 exports.getByName = async (req, res) => {
 	try {
 		const { coinName } = req.params;
@@ -206,6 +234,33 @@ exports.getHistory = async (req, res) => {
 		const data = await Coin.find(filter).sort({ timestamp: 1 }).skip(skip).limit(limit).lean();
 
 		return res.json({ success: true, data, meta: { total, page, limit } });
+	} catch (err) {
+		return res.status(500).json({ success: false, message: err.message });
+	}
+};
+
+exports.getTopMarketCap = async (req, res) => {
+	try {
+		const { data, meta } = await buildLatestCoinLeaderboard('market_cap', -1, req);
+		return res.json({ success: true, data, meta });
+	} catch (err) {
+		return res.status(500).json({ success: false, message: err.message });
+	}
+};
+
+exports.getTopVolume = async (req, res) => {
+	try {
+		const { data, meta } = await buildLatestCoinLeaderboard('volume', -1, req);
+		return res.json({ success: true, data, meta });
+	} catch (err) {
+		return res.status(500).json({ success: false, message: err.message });
+	}
+};
+
+exports.getTopGainers = async (req, res) => {
+	try {
+		const { data, meta } = await buildLatestCoinLeaderboard('daily_return', -1, req);
+		return res.json({ success: true, data, meta });
 	} catch (err) {
 		return res.status(500).json({ success: false, message: err.message });
 	}
