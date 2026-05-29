@@ -54,16 +54,73 @@ const buildCoinPayload = (body, isPatch = false) => {
 	return payload;
 };
 
+const parseAdvancedCoinFilters = (query) => {
+	const filter = { deleted: false };
+
+	const normalizeSymbol = (value) => String(value).trim().toUpperCase();
+	const parseNumber = (value, label) => {
+		if (value === undefined || value === null || value === '') return undefined;
+		const number = Number(value);
+		if (Number.isNaN(number)) {
+			throw new Error(`${label} must be a number`);
+		}
+		return number;
+	};
+
+	const applyExactAndRange = (fieldName, exactValue, minValue, maxValue, label) => {
+		const exact = parseNumber(exactValue, label);
+		const min = parseNumber(minValue, `min${label}`);
+		const max = parseNumber(maxValue, `max${label}`);
+
+		if (exact !== undefined && (min !== undefined || max !== undefined)) {
+			throw new Error(`${label} cannot be combined with min/max filters`);
+		}
+
+		if (exact !== undefined) {
+			filter[fieldName] = exact;
+			return;
+		}
+
+		if (min !== undefined || max !== undefined) {
+			filter[fieldName] = {};
+			if (min !== undefined) filter[fieldName].$gte = min;
+			if (max !== undefined) filter[fieldName].$lte = max;
+		}
+	};
+
+	if (query.symbol !== undefined && query.symbol !== '') {
+		filter.symbol = normalizeSymbol(query.symbol);
+	}
+
+	if (query.month !== undefined && query.month !== '') {
+		if (!/^\d{4}-\d{2}$/.test(String(query.month))) {
+			throw new Error('month must be YYYY-MM');
+		}
+		filter.month = String(query.month);
+	}
+
+	if (query.rank !== undefined && query.rank !== '') {
+		const rank = parseNumber(query.rank, 'rank');
+		filter.market_cap_rank = rank;
+	}
+
+	applyExactAndRange('price', query.price, query.minPrice, query.maxPrice, 'price');
+	applyExactAndRange('volume', query.volume, query.minVolume, query.maxVolume, 'volume');
+	applyExactAndRange('market_cap', query.marketCap, query.minMarketCap, query.maxMarketCap, 'marketCap');
+	applyExactAndRange('daily_return', query.dailyReturn, query.minDailyReturn, query.maxDailyReturn, 'dailyReturn');
+	applyExactAndRange('volatility_7d', query.volatility, query.minVolatility, query.maxVolatility, 'volatility');
+
+	return filter;
+};
+
 exports.getAllCoins = async (req, res) => {
 	try {
 		const page = Math.max(1, parseInt(req.query.page, 10) || 1);
 		const limit = Math.min(100, Math.max(1, parseInt(req.query.limit, 10) || 20));
 		const skip = (page - 1) * limit;
 
-		const filter = { deleted: false };
-		const { search, symbol, month } = req.query;
-		if (symbol) filter.symbol = symbol;
-		if (month) filter.month = month;
+		const filter = parseAdvancedCoinFilters(req.query);
+		const { search } = req.query;
 		if (search) {
 			const re = new RegExp(search, 'i');
 			filter.$or = [ { coin_name: re }, { coin_id: re }, { symbol: re } ];
