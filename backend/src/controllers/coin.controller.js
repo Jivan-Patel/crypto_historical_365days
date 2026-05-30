@@ -593,6 +593,87 @@ exports.getPriceMetrics = async (req, res) => {
 	}
 };
 
+// Helper: get latest snapshot for a coin within optional range
+const getLatestSnapshot = async (coinId, start, end) => {
+	const filter = { coin_id: coinId, deleted: false };
+	if (start) {
+		const s = new Date(start);
+		if (!Number.isNaN(s.getTime())) filter.timestamp = Object.assign(filter.timestamp || {}, { $gte: s });
+	}
+	if (end) {
+		const e = new Date(end);
+		if (!Number.isNaN(e.getTime())) filter.timestamp = Object.assign(filter.timestamp || {}, { $lte: e });
+	}
+	const doc = await Coin.findOne(filter).sort({ timestamp: -1 }).lean();
+	return doc;
+};
+
+// Compare helper: normalize and rank values across coins for selected fields
+const buildComparison = (rows, fields = ['price', 'market_cap', 'volume']) => {
+	const result = rows.map(r => ({ coin_id: r.coin_id, timestamp: r.timestamp, values: {} }));
+	for (const f of fields) {
+		const vals = rows.map(r => (r && r[f] !== undefined && r[f] !== null) ? Number(r[f]) : null);
+		const max = Math.max(...vals.filter(v => Number.isFinite(v)), 0) || 0;
+		// create ranking
+		const paired = rows.map((r, idx) => ({ coin_id: r ? r.coin_id : null, value: vals[idx], idx }));
+		const sorted = paired.slice().filter(p => Number.isFinite(p.value)).sort((a, b) => b.value - a.value);
+		const ranks = {};
+		for (let i = 0; i < sorted.length; i++) {
+			ranks[sorted[i].coin_id] = i + 1;
+		}
+
+		for (let i = 0; i < rows.length; i++) {
+			const r = rows[i];
+			const val = vals[i];
+			result[i].values[f] = {
+				raw: val,
+				normalized: max > 0 && Number.isFinite(val) ? val / max : null,
+				rank: r && ranks[r.coin_id] ? ranks[r.coin_id] : null
+			};
+		}
+	}
+	return result;
+};
+
+// GET /coins/compare/:coin1/:coin2
+exports.compareTwoCoins = async (req, res) => {
+	try {
+		const { coin1, coin2 } = req.params;
+		const { start, end } = req.query;
+		if (!coin1 || !coin2) return res.status(400).json({ success: false, message: 'Two coin ids required' });
+
+		const a = await getLatestSnapshot(coin1, start, end);
+		const b = await getLatestSnapshot(coin2, start, end);
+
+		const rows = [a || { coin_id: coin1 }, b || { coin_id: coin2 }];
+		const comparison = buildComparison(rows);
+
+		return res.json({ success: true, data: comparison });
+	} catch (err) {
+		return res.status(500).json({ success: false, message: err.message });
+	}
+};
+
+// GET /coins/compare/:coin1/:coin2/:coin3
+exports.compareThreeCoins = async (req, res) => {
+	try {
+		const { coin1, coin2, coin3 } = req.params;
+		const { start, end } = req.query;
+		if (!coin1 || !coin2 || !coin3) return res.status(400).json({ success: false, message: 'Three coin ids required' });
+
+		const a = await getLatestSnapshot(coin1, start, end);
+		const b = await getLatestSnapshot(coin2, start, end);
+		const c = await getLatestSnapshot(coin3, start, end);
+
+		const rows = [a || { coin_id: coin1 }, b || { coin_id: coin2 }, c || { coin_id: coin3 }];
+		const comparison = buildComparison(rows);
+
+		return res.json({ success: true, data: comparison });
+	} catch (err) {
+		return res.status(500).json({ success: false, message: err.message });
+	}
+};
+
 exports.getTopMarketCap = async (req, res) => {
 	try {
 		const { data, meta } = await buildLatestCoinLeaderboard({ market_cap: -1, coin_name: 1, coin_id: 1 }, req);
