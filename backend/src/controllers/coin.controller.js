@@ -463,6 +463,109 @@ exports.getCoinReturns = async (req, res) => {
 	}
 };
 
+// Helper: compute rolling and summary metrics for a numeric field over history
+const computeMetricsForField = (history, field, windows = [7, 30]) => {
+	const values = history.map(d => (d[field] !== undefined && d[field] !== null) ? Number(d[field]) : null).filter(v => Number.isFinite(v));
+	if (values.length === 0) return null;
+
+	const sum = values.reduce((a, b) => a + b, 0);
+	const avg = sum / values.length;
+	const min = Math.min(...values);
+	const max = Math.max(...values);
+
+	const latest = values[values.length - 1];
+	const prev = values[values.length - 2] !== undefined ? values[values.length - 2] : null;
+
+	const windowStats = {};
+	for (const w of windows) {
+		const slice = values.slice(Math.max(0, values.length - w));
+		if (slice.length === 0) {
+			windowStats[`ma${w}`] = null;
+			windowStats[`min${w}`] = null;
+			windowStats[`max${w}`] = null;
+		} else {
+			const s = slice.reduce((a, b) => a + b, 0);
+			windowStats[`ma${w}`] = s / slice.length;
+			windowStats[`min${w}`] = Math.min(...slice);
+			windowStats[`max${w}`] = Math.max(...slice);
+		}
+	}
+
+	// trend: compare latest value to window MA(7) if available
+	const ma7 = windowStats.ma7;
+	let trend = 'flat';
+	if (ma7 !== null && latest > ma7 * 1.001) trend = 'up';
+	else if (ma7 !== null && latest < ma7 * 0.999) trend = 'down';
+
+	return {
+		points: values.length,
+		latest,
+		previous: prev,
+		average: avg,
+		min,
+		max,
+		trend,
+		windows: windowStats
+	};
+};
+
+// GET /coins/market-cap/:coinId?start=&end=
+exports.getMarketCapMetrics = async (req, res) => {
+	try {
+		const coinId = req.params.coinId;
+		if (!coinId) return res.status(400).json({ success: false, message: 'coinId is required' });
+
+		const { start, end } = req.query;
+		const history = await loadCoinHistory(coinId, start, end);
+		if (!history || history.length === 0) return res.status(404).json({ success: false, message: 'No history found for coin' });
+
+		const metrics = computeMetricsForField(history, 'market_cap');
+		if (!metrics) return res.status(404).json({ success: false, message: 'No market_cap data available' });
+
+		return res.json({ success: true, data: { coin_id: coinId, field: 'market_cap', metrics } });
+	} catch (err) {
+		return res.status(500).json({ success: false, message: err.message });
+	}
+};
+
+// GET /coins/volume/:coinId?start=&end=
+exports.getVolumeMetrics = async (req, res) => {
+	try {
+		const coinId = req.params.coinId;
+		if (!coinId) return res.status(400).json({ success: false, message: 'coinId is required' });
+
+		const { start, end } = req.query;
+		const history = await loadCoinHistory(coinId, start, end);
+		if (!history || history.length === 0) return res.status(404).json({ success: false, message: 'No history found for coin' });
+
+		const metrics = computeMetricsForField(history, 'volume');
+		if (!metrics) return res.status(404).json({ success: false, message: 'No volume data available' });
+
+		return res.json({ success: true, data: { coin_id: coinId, field: 'volume', metrics } });
+	} catch (err) {
+		return res.status(500).json({ success: false, message: err.message });
+	}
+};
+
+// GET /coins/price/:coinId?start=&end=
+exports.getPriceMetrics = async (req, res) => {
+	try {
+		const coinId = req.params.coinId;
+		if (!coinId) return res.status(400).json({ success: false, message: 'coinId is required' });
+
+		const { start, end } = req.query;
+		const history = await loadCoinHistory(coinId, start, end);
+		if (!history || history.length === 0) return res.status(404).json({ success: false, message: 'No history found for coin' });
+
+		const metrics = computeMetricsForField(history, 'price');
+		if (!metrics) return res.status(404).json({ success: false, message: 'No price data available' });
+
+		return res.json({ success: true, data: { coin_id: coinId, field: 'price', metrics } });
+	} catch (err) {
+		return res.status(500).json({ success: false, message: err.message });
+	}
+};
+
 exports.getTopMarketCap = async (req, res) => {
 	try {
 		const { data, meta } = await buildLatestCoinLeaderboard({ market_cap: -1, coin_name: 1, coin_id: 1 }, req);
