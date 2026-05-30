@@ -334,6 +334,135 @@ exports.getHistory = async (req, res) => {
 	}
 };
 
+// Shared loader to fetch ordered history for a coin within optional date range
+const loadCoinHistory = async (coinId, start, end) => {
+
+	const filter = { coin_id: coinId, deleted: false };
+	if (start) {
+		const s = new Date(start);
+		if (Number.isNaN(s.getTime())) throw new Error('start must be a valid date');
+		filter.timestamp = Object.assign(filter.timestamp || {}, { $gte: s });
+	}
+	if (end) {
+		const e = new Date(end);
+		if (Number.isNaN(e.getTime())) throw new Error('end must be a valid date');
+		filter.timestamp = Object.assign(filter.timestamp || {}, { $lte: e });
+	}
+
+	const docs = await Coin.find(filter).sort({ timestamp: 1 }).lean();
+	return docs;
+};
+
+// GET /coins/performance/:coinId?start=YYYY-MM-DD&end=YYYY-MM-DD
+exports.getCoinPerformance = async (req, res) => {
+	try {
+		const coinId = req.params.coinId;
+		if (!coinId) return res.status(400).json({ success: false, message: 'coinId is required' });
+
+		const { start, end } = req.query;
+		const history = await loadCoinHistory(coinId, start, end);
+		if (!history || history.length === 0) return res.status(404).json({ success: false, message: 'No history found for coin' });
+
+		const first = history[0];
+		const last = history[history.length - 1];
+
+		const change = last.price - first.price;
+		const pctChange = (change / first.price) * 100;
+		const days = Math.max(1, (new Date(last.timestamp) - new Date(first.timestamp)) / (1000 * 60 * 60 * 24));
+
+		return res.json({
+			success: true,
+			data: {
+				coin_id: coinId,
+				from: first.timestamp,
+				to: last.timestamp,
+				startPrice: Number(first.price),
+				endPrice: Number(last.price),
+				absoluteChange: Number(change),
+				percentChange: Number(pctChange),
+				days: Number(days)
+			}
+		});
+	} catch (err) {
+		return res.status(500).json({ success: false, message: err.message });
+	}
+};
+
+// GET /coins/volatility/:coinId?start=YYYY-MM-DD&end=YYYY-MM-DD
+exports.getCoinVolatility = async (req, res) => {
+	try {
+		const coinId = req.params.coinId;
+		if (!coinId) return res.status(400).json({ success: false, message: 'coinId is required' });
+
+		const { start, end } = req.query;
+		const history = await loadCoinHistory(coinId, start, end);
+		if (!history || history.length < 2) return res.status(404).json({ success: false, message: 'Not enough history for volatility calculation' });
+
+		// compute daily returns (if daily_return exists prefer it, otherwise compute from price)
+		const returns = [];
+		for (let i = 1; i < history.length; i++) {
+			const prev = history[i - 1];
+			const cur = history[i];
+			let r;
+			if (cur.daily_return !== undefined && cur.daily_return !== null) {
+				r = Number(cur.daily_return);
+			} else if (prev.price !== undefined && cur.price !== undefined && prev.price !== 0) {
+				r = (Number(cur.price) - Number(prev.price)) / Number(prev.price);
+			} else {
+				continue;
+			}
+			if (!Number.isFinite(r)) continue;
+			returns.push(r);
+		}
+
+		if (returns.length === 0) return res.status(404).json({ success: false, message: 'No valid returns to compute volatility' });
+
+		const mean = returns.reduce((a, b) => a + b, 0) / returns.length;
+		const variance = returns.reduce((a, b) => a + Math.pow(b - mean, 2), 0) / returns.length;
+		const stddev = Math.sqrt(variance);
+
+		// annualize assuming daily returns (approx)
+		const annualizedVol = stddev * Math.sqrt(365);
+
+		return res.json({
+			success: true,
+			data: {
+				coin_id: coinId,
+				points: returns.length,
+				stddev: Number(stddev),
+				annualizedVolatility: Number(annualizedVol)
+			}
+		});
+	} catch (err) {
+		return res.status(500).json({ success: false, message: err.message });
+	}
+};
+
+// GET /coins/returns/:coinId?start=YYYY-MM-DD&end=YYYY-MM-DD&format=percent|decimal
+exports.getCoinReturns = async (req, res) => {
+	try {
+		const coinId = req.params.coinId;
+		if (!coinId) return res.status(400).json({ success: false, message: 'coinId is required' });
+
+		const { start, end, format = 'percent' } = req.query;
+		const history = await loadCoinHistory(coinId, start, end);
+		if (!history || history.length < 2) return res.status(404).json({ success: false, message: 'Not enough history for returns calculation' });
+
+		const results = [];
+		for (let i = 1; i < history.length; i++) {
+			const prev = history[i - 1];
+			const cur = history[i];
+			if (prev.price === undefined || cur.price === undefined || prev.price === 0) continue;
+			const dec = (Number(cur.price) - Number(prev.price)) / Number(prev.price);
+			results.push({ timestamp: cur.timestamp, return_decimal: Number(dec), return_percent: Number(dec * 100) });
+		}
+
+		return res.json({ success: true, data: { coin_id: coinId, points: results.length, returns: results.map(r => (format === 'decimal' ? r.return_decimal : r.return_percent)) } });
+	} catch (err) {
+		return res.status(500).json({ success: false, message: err.message });
+	}
+};
+
 exports.getTopMarketCap = async (req, res) => {
 	try {
 		const { data, meta } = await buildLatestCoinLeaderboard({ market_cap: -1, coin_name: 1, coin_id: 1 }, req);
