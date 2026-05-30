@@ -16,6 +16,7 @@ router.get('/top-gainers', coinController.getTopGainers);
 router.get('/exists/:id', coinController.exists);
 router.get('/month/:month', coinController.getByMonth);
 router.get('/date/:date', coinController.getByDate);
+router.get('/history/:coinId/:month', coinController.getHistoryByMonth);
 router.get('/history/:coinId', coinController.getHistory);
 router.get('/performance/:coinId', coinController.getCoinPerformance);
 router.get('/volatility/:coinId', coinController.getCoinVolatility);

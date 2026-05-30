@@ -334,6 +334,33 @@ exports.getHistory = async (req, res) => {
 	}
 };
 
+// GET /coins/history/:coinId/:month  (YYYY-MM)
+exports.getHistoryByMonth = async (req, res) => {
+	try {
+		const coinId = req.params.coinId;
+		const month = req.params.month;
+
+		if (!coinId) return res.status(400).json({ success: false, message: 'coinId is required' });
+		if (!month || !/^\d{4}-\d{2}$/.test(month)) return res.status(400).json({ success: false, message: 'month must be YYYY-MM' });
+
+		const start = new Date(`${month}-01T00:00:00.000Z`);
+		if (Number.isNaN(start.getTime())) return res.status(400).json({ success: false, message: 'month is invalid' });
+		// last day of month at end of day
+		const end = new Date(Date.UTC(start.getUTCFullYear(), start.getUTCMonth() + 1, 0, 23, 59, 59, 999));
+
+		const { page, limit, skip } = getPagination(req.query, 20, 500);
+
+		const filter = { coin_id: coinId, deleted: false, timestamp: { $gte: start, $lte: end } };
+
+		const total = await Coin.countDocuments(filter);
+		const data = await Coin.find(filter).sort({ timestamp: 1 }).skip(skip).limit(limit).lean();
+
+		return res.json({ success: true, data, meta: { total, page, limit, month } });
+	} catch (err) {
+		return res.status(500).json({ success: false, message: err.message });
+	}
+};
+
 // Shared loader to fetch ordered history for a coin within optional date range
 const loadCoinHistory = async (coinId, start, end) => {
 
