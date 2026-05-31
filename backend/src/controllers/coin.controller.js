@@ -995,3 +995,30 @@ exports.bulkDelete = async (req, res) => {
 		return res.status(500).json({ success: false, message: err.message });
 	}
 };
+
+// Aggregation helpers (reusable pipelines + paged aggregate runner)
+exports.buildLatestPerCoinPipeline = (match = { deleted: false }, sortSpec = { timestamp: -1 }) => {
+	const pipeline = [];
+	if (match && Object.keys(match).length) pipeline.push({ $match: match });
+	pipeline.push({ $sort: { coin_id: 1, timestamp: -1 } });
+	pipeline.push({ $group: { _id: '$coin_id', doc: { $first: '$$ROOT' } } });
+	pipeline.push({ $replaceRoot: { newRoot: '$doc' } });
+	pipeline.push({ $sort: sortSpec });
+	return pipeline;
+};
+
+exports.runPagedAggregation = async (basePipeline, req, defaultLimit = 20, maxLimit = 100) => {
+	const { page, limit, skip } = getPagination(req, defaultLimit, maxLimit);
+	const pipeline = Array.isArray(basePipeline) ? basePipeline.slice() : [];
+	pipeline.push({
+		$facet: {
+			data: [{ $skip: skip }, { $limit: limit }],
+			meta: [{ $count: 'total' }]
+		}
+	});
+
+	const [result = { data: [], meta: [] }] = await Coin.aggregate(pipeline);
+	const total = result.meta[0] ? result.meta[0].total : 0;
+	return { data: result.data, meta: { total, page, limit } };
+};
+
