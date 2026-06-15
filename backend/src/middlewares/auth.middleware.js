@@ -12,6 +12,14 @@ const authMiddleware = (req, res, next) => {
 
 	const token = authHeader.split(' ')[1];
 
+	const blacklist = require('../config/blacklist');
+	if (blacklist.has(token)) {
+		return res.status(401).json({
+			success: false,
+			message: 'Token has been revoked'
+		});
+	}
+
 	if (!process.env.JWT_SECRET) {
 		return res.status(500).json({
 			success: false,
