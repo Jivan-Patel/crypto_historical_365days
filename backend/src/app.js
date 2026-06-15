@@ -6,6 +6,7 @@ const filterRoutes = require('./routes/filter.routes');
 const searchRoutes = require('./routes/search.routes');
 const analyticsRoutes = require('./routes/analytics.routes');
 const statsRoutes = require('./routes/stats.routes');
+const jwtRoutes = require('./routes/jwt.routes');
 const loggerFactory = require('./middlewares/logger.middleware');
 const errorHandler = require('./middlewares/error.middleware');
 
@@ -20,6 +21,7 @@ app.use(express.json());
 app.use('/auth', authRoutes);
 app.use('/analytics', analyticsRoutes);
 app.use('/stats', statsRoutes);
+app.use('/jwt', jwtRoutes);
 app.use('/coins/filter', filterRoutes);
 app.use('/coins', coinRoutes);
 app.use('/search', searchRoutes);
