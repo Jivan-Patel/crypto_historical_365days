@@ -9,6 +9,24 @@ router.get('/sort/price-desc', coinController.sortPriceDesc);
 router.get('/sort/volume-desc', coinController.sortVolumeDesc);
 router.get('/sort/rank-asc', coinController.sortRankAsc);
 router.get('/sort/return-desc', coinController.sortReturnDesc);
+// Advanced Utilities
+router.get('/random', coinController.getRandom);
+router.get('/recommendations', coinController.getRecommendations);
+router.get('/predictions', coinController.getPredictions);
+router.get('/portfolio/simulate', coinController.simulatePortfolio);
+router.get('/heatmap', coinController.getHeatmap);
+router.get('/market-status', coinController.getMarketStatus);
+router.get('/performance/top-monthly', coinController.getTopMonthlyPerformers);
+router.get('/performance/top-yearly', coinController.getTopYearlyPerformers);
+router.get('/alerts/high-volatility', coinController.getVolatilityAlerts);
+router.get('/alerts/market-drop', coinController.getMarketDropAlerts);
+router.post('/report', coinController.submitReport);
+router.get('/cache/clear', coinController.clearCache);
+router.get('/system/health', coinController.getSystemHealth);
+router.get('/system/version', coinController.getSystemVersion);
+router.get('/system/config', coinController.getSystemConfig);
+router.get('/export/csv', coinController.exportCSV);
+router.get('/export/json', coinController.exportJSON);
 
 router.get('/recent', coinController.getRecent);
 router.get('/oldest', coinController.getOldest);

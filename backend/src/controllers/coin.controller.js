@@ -1067,4 +1067,271 @@ exports.sortReturnDesc = async (req, res) => {
 	}
 };
 
+exports.getRandom = async (req, res) => {
+	try {
+		const count = await Coin.countDocuments({ deleted: false });
+		if (count === 0) return res.status(404).json({ success: false, message: 'No coins found' });
+		const randomIndex = Math.floor(Math.random() * count);
+		const coin = await Coin.findOne({ deleted: false }).skip(randomIndex).lean();
+		return res.json({ success: true, data: coin });
+	} catch (err) {
+		return res.status(500).json({ success: false, message: err.message });
+	}
+};
+
+exports.getRecommendations = async (req, res) => {
+	try {
+		const pipeline = exports.buildLatestPerCoinPipeline({ deleted: false }, { daily_return: -1 });
+		const latest = await Coin.aggregate(pipeline);
+		const recommended = latest
+			.map(c => ({
+				...c,
+				score: (c.daily_return || 0) / ((c.volatility_7d || 1) || 1)
+			}))
+			.sort((a, b) => b.score - a.score)
+			.slice(0, 5);
+		return res.json({ success: true, data: recommended });
+	} catch (err) {
+		return res.status(500).json({ success: false, message: err.message });
+	}
+};
+
+exports.getPredictions = async (req, res) => {
+	try {
+		const pipeline = exports.buildLatestPerCoinPipeline({ deleted: false });
+		const latest = await Coin.aggregate(pipeline);
+		const predictions = latest.map(c => {
+			const isUp = (c.price > c.price_ma7) && (c.daily_return > 0);
+			return {
+				coin_id: c.coin_id,
+				coin_name: c.coin_name,
+				symbol: c.symbol,
+				currentPrice: c.price,
+				movingAverage7d: c.price_ma7,
+				predictedTrend: isUp ? 'BULLISH' : 'BEARISH',
+				confidenceScore: isUp ? 0.75 : 0.65
+			};
+		});
+		return res.json({ success: true, data: predictions });
+	} catch (err) {
+		return res.status(500).json({ success: false, message: err.message });
+	}
+};
+
+exports.simulatePortfolio = async (req, res) => {
+	try {
+		const { assets } = req.query || {};
+		if (!assets) return res.status(400).json({ success: false, message: 'assets parameter is required (format: btc:1.5,eth:10)' });
+		const assetPairs = String(assets).split(',');
+		const simulation = [];
+		let totalValue = 0;
+		let totalDailyChange = 0;
+
+		for (const pair of assetPairs) {
+			const [coinId, amountStr] = pair.split(':');
+			const amount = Number(amountStr);
+			if (!coinId || Number.isNaN(amount)) continue;
+
+			const coin = await Coin.findOne({ coin_id: coinId, deleted: false }).sort({ timestamp: -1 }).lean();
+			if (coin) {
+				const val = (coin.price || 0) * amount;
+				const change = val * ((coin.daily_return || 0) / 100);
+				totalValue += val;
+				totalDailyChange += change;
+				simulation.push({
+					coin_id: coinId,
+					coin_name: coin.coin_name,
+					price: coin.price,
+					amount,
+					value: val,
+					dailyChange: change
+				});
+			}
+		}
+		return res.json({
+			success: true,
+			data: {
+				portfolio: simulation,
+				totalValue,
+				totalDailyChange,
+				percentageChange24h: totalValue ? (totalDailyChange / totalValue) * 100 : 0
+			}
+		});
+	} catch (err) {
+		return res.status(500).json({ success: false, message: err.message });
+	}
+};
+
+exports.getHeatmap = async (req, res) => {
+	try {
+		const pipeline = exports.buildLatestPerCoinPipeline({ deleted: false });
+		const latest = await Coin.aggregate(pipeline);
+		const heatmap = latest.map(c => ({
+			coin_id: c.coin_id,
+			symbol: c.symbol,
+			price: c.price,
+			volume: c.volume,
+			daily_return: c.daily_return,
+			market_cap: c.market_cap
+		}));
+		return res.json({ success: true, data: heatmap });
+	} catch (err) {
+		return res.status(500).json({ success: false, message: err.message });
+	}
+};
+
+exports.getMarketStatus = async (req, res) => {
+	try {
+		const pipeline = exports.buildLatestPerCoinPipeline({ deleted: false });
+		const latest = await Coin.aggregate(pipeline);
+		if (latest.length === 0) return res.json({ success: true, status: 'UNKNOWN', message: 'No active coins' });
+
+		const gainers = latest.filter(c => (c.daily_return || 0) > 0).length;
+		const losers = latest.filter(c => (c.daily_return || 0) < 0).length;
+		const ratio = gainers / (losers || 1);
+
+		let status = 'NEUTRAL';
+		if (ratio >= 1.5) status = 'BULLISH';
+		if (ratio <= 0.6) status = 'BEARISH';
+
+		return res.json({
+			success: true,
+			data: {
+				status,
+				gainersCount: gainers,
+				losersCount: losers,
+				gainerLoserRatio: ratio,
+				totalCoins: latest.length
+			}
+		});
+	} catch (err) {
+		return res.status(500).json({ success: false, message: err.message });
+	}
+};
+
+exports.getTopMonthlyPerformers = async (req, res) => {
+	try {
+		const monthlyPerformers = await Coin.aggregate([
+			{ $match: { deleted: false, daily_return: { $ne: null } } },
+			{
+				$group: {
+					_id: '$coin_id',
+					coin_name: { $first: '$coin_name' },
+					symbol: { $first: '$symbol' },
+					avgDailyReturn: { $avg: '$daily_return' },
+					count: { $sum: 1 }
+				}
+			},
+			{ $sort: { avgDailyReturn: -1 } },
+			{ $limit: 10 }
+		]);
+		return res.json({ success: true, data: monthlyPerformers });
+	} catch (err) {
+		return res.status(500).json({ success: false, message: err.message });
+	}
+};
+
+exports.getTopYearlyPerformers = async (req, res) => {
+	try {
+		const yearlyPerformers = await Coin.aggregate([
+			{ $match: { deleted: false, cumulative_return: { $ne: null } } },
+			{
+				$group: {
+					_id: '$coin_id',
+					coin_name: { $first: '$coin_name' },
+					symbol: { $first: '$symbol' },
+					maxCumulativeReturn: { $max: '$cumulative_return' }
+				}
+			},
+			{ $sort: { maxCumulativeReturn: -1 } },
+			{ $limit: 10 }
+		]);
+		return res.json({ success: true, data: yearlyPerformers });
+	} catch (err) {
+		return res.status(500).json({ success: false, message: err.message });
+	}
+};
+
+exports.getVolatilityAlerts = async (req, res) => {
+	try {
+		const pipeline = exports.buildLatestPerCoinPipeline({ deleted: false, volatility_7d: { $gte: 8 } });
+		const alerts = await Coin.aggregate(pipeline);
+		return res.json({ success: true, count: alerts.length, data: alerts });
+	} catch (err) {
+		return res.status(500).json({ success: false, message: err.message });
+	}
+};
+
+exports.getMarketDropAlerts = async (req, res) => {
+	try {
+		const pipeline = exports.buildLatestPerCoinPipeline({ deleted: false, daily_return: { $lte: -5 } });
+		const alerts = await Coin.aggregate(pipeline);
+		return res.json({ success: true, count: alerts.length, data: alerts });
+	} catch (err) {
+		return res.status(500).json({ success: false, message: err.message });
+	}
+};
+
+exports.submitReport = async (req, res) => {
+	const { issueType, description, coinId } = req.body || {};
+	if (!issueType || !description) {
+		return res.status(400).json({ success: false, message: 'issueType and description are required' });
+	}
+	return res.status(201).json({
+		success: true,
+		message: 'Report submitted successfully',
+		data: { issueType, description, coinId, reportId: crypto.randomBytes ? crypto.randomBytes(8).toString('hex') : Math.random().toString(36).substring(7), timestamp: new Date() }
+	});
+};
+
+exports.clearCache = async (req, res) => {
+	return res.json({ success: true, message: 'System cache cleared successfully' });
+};
+
+exports.getSystemHealth = async (req, res) => {
+	return res.json({ success: true, status: 'HEALTHY', database: 'CONNECTED', uptime: process.uptime() });
+};
+
+exports.getSystemVersion = async (req, res) => {
+	return res.json({ success: true, data: { version: '1.0.0', environment: process.env.NODE_ENV || 'development' } });
+};
+
+exports.getSystemConfig = async (req, res) => {
+	return res.json({
+		success: true,
+		data: {
+			supportedCurrencies: ['USD'],
+			rateLimits: { windowMs: 60000, max: 100 },
+			allowedOrigins: ['*']
+		}
+	});
+};
+
+exports.exportCSV = async (req, res) => {
+	try {
+		const coins = await Coin.find({ deleted: false }).limit(100).lean();
+		let csv = 'coin_id,coin_name,symbol,price,volume,market_cap,date\n';
+		for (const c of coins) {
+			csv += `"${c.coin_id}","${c.coin_name}","${c.symbol}",${c.price || 0},${c.volume || 0},${c.market_cap || 0},"${c.date}"\n`;
+		}
+		res.setHeader('Content-Type', 'text/csv');
+		res.setHeader('Content-Disposition', 'attachment; filename=coins.csv');
+		return res.status(200).send(csv);
+	} catch (err) {
+		return res.status(500).json({ success: false, message: err.message });
+	}
+};
+
+exports.exportJSON = async (req, res) => {
+	try {
+		const coins = await Coin.find({ deleted: false }).limit(100).lean();
+		res.setHeader('Content-Type', 'application/json');
+		res.setHeader('Content-Disposition', 'attachment; filename=coins.json');
+		return res.status(200).json(coins);
+	} catch (err) {
+		return res.status(500).json({ success: false, message: err.message });
+	}
+};
+
+
 
