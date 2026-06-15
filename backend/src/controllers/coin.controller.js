@@ -1022,3 +1022,49 @@ exports.runPagedAggregation = async (basePipeline, req, defaultLimit = 20, maxLi
 	return { data: result.data, meta: { total, page, limit } };
 };
 
+exports.sortPriceAsc = async (req, res) => {
+	try {
+		const { data, meta } = await buildDatasetWindow(req, { price: 1 });
+		return res.json({ success: true, data, meta });
+	} catch (err) {
+		return res.status(500).json({ success: false, message: err.message });
+	}
+};
+
+exports.sortPriceDesc = async (req, res) => {
+	try {
+		const { data, meta } = await buildDatasetWindow(req, { price: -1 });
+		return res.json({ success: true, data, meta });
+	} catch (err) {
+		return res.status(500).json({ success: false, message: err.message });
+	}
+};
+
+exports.sortVolumeDesc = async (req, res) => {
+	try {
+		const { data, meta } = await buildDatasetWindow(req, { volume: -1 });
+		return res.json({ success: true, data, meta });
+	} catch (err) {
+		return res.status(500).json({ success: false, message: err.message });
+	}
+};
+
+exports.sortRankAsc = async (req, res) => {
+	try {
+		const { data, meta } = await buildDatasetWindow(req, { market_cap_rank: 1 });
+		return res.json({ success: true, data, meta });
+	} catch (err) {
+		return res.status(500).json({ success: false, message: err.message });
+	}
+};
+
+exports.sortReturnDesc = async (req, res) => {
+	try {
+		const { data, meta } = await buildDatasetWindow(req, { daily_return: -1 });
+		return res.json({ success: true, data, meta });
+	} catch (err) {
+		return res.status(500).json({ success: false, message: err.message });
+	}
+};
+
+

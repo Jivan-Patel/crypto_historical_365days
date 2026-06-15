@@ -4,6 +4,12 @@ const coinController = require('../controllers/coin.controller');
 const authMiddleware = require('../middlewares/auth.middleware');
 
 // Order matters: more specific routes first
+router.get('/sort/price-asc', coinController.sortPriceAsc);
+router.get('/sort/price-desc', coinController.sortPriceDesc);
+router.get('/sort/volume-desc', coinController.sortVolumeDesc);
+router.get('/sort/rank-asc', coinController.sortRankAsc);
+router.get('/sort/return-desc', coinController.sortReturnDesc);
+
 router.get('/recent', coinController.getRecent);
 router.get('/oldest', coinController.getOldest);
 router.get('/newest', coinController.getNewest);
