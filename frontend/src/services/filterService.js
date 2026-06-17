@@ -1,7 +1,7 @@
 import api from './api';
 
 const base = (key) => (params) =>
-  api.get(`/filter/${key}`, { params }).then((r) => r.data);
+  api.get(`/coins/filter/${key}`, { params }).then((r) => r.data);
 
 export const filterHighPrice = base('high-price');
 export const filterLowPrice = base('low-price');

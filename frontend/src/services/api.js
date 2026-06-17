@@ -1,7 +1,7 @@
 import axios from 'axios';
 import toast from 'react-hot-toast';
 import { API_BASE_URL } from '../utils/constants';
-import { getToken, clearAuthStorage } from '../utils/storage';
+import { getToken, clearAuthStorage, setToken } from '../utils/storage';
 
 // ─── Axios instance ──────────────────────────────────────────────────────────
 const api = axios.create({
@@ -65,7 +65,6 @@ api.interceptors.response.use(
           );
           const newToken = res.data?.token;
           if (newToken) {
-            const { setToken } = await import('../utils/storage');
             setToken(newToken);
             originalRequest.headers.Authorization = `Bearer ${newToken}`;
             isRefreshing = false;
