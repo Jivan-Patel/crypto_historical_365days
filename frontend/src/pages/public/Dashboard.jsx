@@ -49,165 +49,165 @@ const Dashboard = () => {
   }
 
   return (
-    <div className="space-y-6 max-w-7xl mx-auto">
+    <div className="space-y-8 max-w-7xl mx-auto">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Market Overview</h1>
-        <div className="flex items-center space-x-2 text-sm text-gray-500 dark:text-gray-400">
-          <Clock className="h-4 w-4" />
-          <span>Last updated: Just now</span>
+        <h1 className="text-3xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 to-purple-600 dark:from-indigo-400 dark:to-purple-400 tracking-tight">Market Overview</h1>
+        <div className="flex items-center space-x-2 text-sm font-medium px-4 py-2 bg-white/50 dark:bg-slate-800/50 rounded-full backdrop-blur-md border border-white/20 dark:border-slate-700/50 shadow-sm text-slate-600 dark:text-slate-300">
+          <Clock className="h-4 w-4 text-indigo-500" />
+          <span>Live Updates</span>
         </div>
       </div>
 
       {/* Top Stat Cards */}
-      <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
         {/* Total Market Cap */}
-        <div className="bg-white dark:bg-gray-800 overflow-hidden shadow-sm rounded-xl border border-gray-100 dark:border-gray-700 hover:shadow-md transition-shadow">
-          <div className="p-5">
-            <div className="flex items-center">
-              <div className="flex-shrink-0">
-                <div className="p-3 bg-indigo-100 dark:bg-indigo-900/40 rounded-lg">
-                  <DollarSign className="h-6 w-6 text-indigo-600 dark:text-indigo-400" />
-                </div>
+        <div className="glass-card rounded-2xl p-6 group relative overflow-hidden">
+          <div className="absolute top-0 right-0 w-32 h-32 bg-indigo-500/10 rounded-full blur-[40px] -mr-10 -mt-10 transition-transform group-hover:scale-150 duration-700"></div>
+          <div className="flex items-center relative z-10">
+            <div className="flex-shrink-0">
+              <div className="p-3.5 bg-gradient-to-br from-indigo-500 to-indigo-600 rounded-xl shadow-lg shadow-indigo-500/30 text-white">
+                <DollarSign className="h-6 w-6" />
               </div>
-              <div className="ml-5 w-0 flex-1">
-                <dl>
-                  <dt className="text-sm font-medium text-gray-500 dark:text-gray-400 truncate">Total Market Cap</dt>
-                  <dd className="flex items-baseline">
-                    <div className="text-2xl font-bold text-gray-900 dark:text-white">
-                      {formatCurrency(marketStats?.totalMarketCap)}
-                    </div>
-                  </dd>
-                </dl>
-              </div>
+            </div>
+            <div className="ml-5 w-0 flex-1">
+              <dl>
+                <dt className="text-sm font-semibold text-slate-500 dark:text-slate-400 truncate">Total Market Cap</dt>
+                <dd className="flex items-baseline mt-1">
+                  <div className="text-2xl font-black text-slate-900 dark:text-white tracking-tight">
+                    {formatCurrency(marketStats?.totalMarketCap)}
+                  </div>
+                </dd>
+              </dl>
             </div>
           </div>
         </div>
 
         {/* 24h Volume */}
-        <div className="bg-white dark:bg-gray-800 overflow-hidden shadow-sm rounded-xl border border-gray-100 dark:border-gray-700 hover:shadow-md transition-shadow">
-          <div className="p-5">
-            <div className="flex items-center">
-              <div className="flex-shrink-0">
-                <div className="p-3 bg-blue-100 dark:bg-blue-900/40 rounded-lg">
-                  <Activity className="h-6 w-6 text-blue-600 dark:text-blue-400" />
-                </div>
+        <div className="glass-card rounded-2xl p-6 group relative overflow-hidden">
+          <div className="absolute top-0 right-0 w-32 h-32 bg-blue-500/10 rounded-full blur-[40px] -mr-10 -mt-10 transition-transform group-hover:scale-150 duration-700"></div>
+          <div className="flex items-center relative z-10">
+            <div className="flex-shrink-0">
+              <div className="p-3.5 bg-gradient-to-br from-blue-500 to-cyan-600 rounded-xl shadow-lg shadow-blue-500/30 text-white">
+                <Activity className="h-6 w-6" />
               </div>
-              <div className="ml-5 w-0 flex-1">
-                <dl>
-                  <dt className="text-sm font-medium text-gray-500 dark:text-gray-400 truncate">24h Volume</dt>
-                  <dd className="flex items-baseline">
-                    <div className="text-2xl font-bold text-gray-900 dark:text-white">
-                      {formatCurrency(marketStats?.totalVolume)}
-                    </div>
-                  </dd>
-                </dl>
-              </div>
+            </div>
+            <div className="ml-5 w-0 flex-1">
+              <dl>
+                <dt className="text-sm font-semibold text-slate-500 dark:text-slate-400 truncate">24h Volume</dt>
+                <dd className="flex items-baseline mt-1">
+                  <div className="text-2xl font-black text-slate-900 dark:text-white tracking-tight">
+                    {formatCurrency(marketStats?.totalVolume)}
+                  </div>
+                </dd>
+              </dl>
             </div>
           </div>
         </div>
 
         {/* Average Price */}
-        <div className="bg-white dark:bg-gray-800 overflow-hidden shadow-sm rounded-xl border border-gray-100 dark:border-gray-700 hover:shadow-md transition-shadow">
-          <div className="p-5">
-            <div className="flex items-center">
-              <div className="flex-shrink-0">
-                <div className="p-3 bg-purple-100 dark:bg-purple-900/40 rounded-lg">
-                  <BarChart3 className="h-6 w-6 text-purple-600 dark:text-purple-400" />
-                </div>
+        <div className="glass-card rounded-2xl p-6 group relative overflow-hidden">
+          <div className="absolute top-0 right-0 w-32 h-32 bg-purple-500/10 rounded-full blur-[40px] -mr-10 -mt-10 transition-transform group-hover:scale-150 duration-700"></div>
+          <div className="flex items-center relative z-10">
+            <div className="flex-shrink-0">
+              <div className="p-3.5 bg-gradient-to-br from-purple-500 to-pink-600 rounded-xl shadow-lg shadow-purple-500/30 text-white">
+                <BarChart3 className="h-6 w-6" />
               </div>
-              <div className="ml-5 w-0 flex-1">
-                <dl>
-                  <dt className="text-sm font-medium text-gray-500 dark:text-gray-400 truncate">Average Asset Price</dt>
-                  <dd className="flex items-baseline">
-                    <div className="text-2xl font-bold text-gray-900 dark:text-white">
-                      {formatCurrency(marketStats?.averagePrice)}
-                    </div>
-                  </dd>
-                </dl>
-              </div>
+            </div>
+            <div className="ml-5 w-0 flex-1">
+              <dl>
+                <dt className="text-sm font-semibold text-slate-500 dark:text-slate-400 truncate">Average Asset Price</dt>
+                <dd className="flex items-baseline mt-1">
+                  <div className="text-2xl font-black text-slate-900 dark:text-white tracking-tight">
+                    {formatCurrency(marketStats?.averagePrice)}
+                  </div>
+                </dd>
+              </dl>
             </div>
           </div>
         </div>
 
         {/* Active Coins */}
-        <div className="bg-white dark:bg-gray-800 overflow-hidden shadow-sm rounded-xl border border-gray-100 dark:border-gray-700 hover:shadow-md transition-shadow">
-          <div className="p-5">
-            <div className="flex items-center">
-              <div className="flex-shrink-0">
-                <div className="p-3 bg-emerald-100 dark:bg-emerald-900/40 rounded-lg">
-                  <PieChart className="h-6 w-6 text-emerald-600 dark:text-emerald-400" />
-                </div>
+        <div className="glass-card rounded-2xl p-6 group relative overflow-hidden">
+          <div className="absolute top-0 right-0 w-32 h-32 bg-emerald-500/10 rounded-full blur-[40px] -mr-10 -mt-10 transition-transform group-hover:scale-150 duration-700"></div>
+          <div className="flex items-center relative z-10">
+            <div className="flex-shrink-0">
+              <div className="p-3.5 bg-gradient-to-br from-emerald-400 to-emerald-600 rounded-xl shadow-lg shadow-emerald-500/30 text-white">
+                <PieChart className="h-6 w-6" />
               </div>
-              <div className="ml-5 w-0 flex-1">
-                <dl>
-                  <dt className="text-sm font-medium text-gray-500 dark:text-gray-400 truncate">Active Tracked Coins</dt>
-                  <dd className="flex items-baseline">
-                    <div className="text-2xl font-bold text-gray-900 dark:text-white">
-                      {marketStats?.coinCount || '---'}
-                    </div>
-                  </dd>
-                </dl>
-              </div>
+            </div>
+            <div className="ml-5 w-0 flex-1">
+              <dl>
+                <dt className="text-sm font-semibold text-slate-500 dark:text-slate-400 truncate">Active Tracked Coins</dt>
+                <dd className="flex items-baseline mt-1">
+                  <div className="text-2xl font-black text-slate-900 dark:text-white tracking-tight">
+                    {marketStats?.coinCount || '---'}
+                  </div>
+                </dd>
+              </dl>
             </div>
           </div>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* Main Content Area / Chart Placeholder */}
-        <div className="lg:col-span-2 space-y-6">
-          <div className="bg-white dark:bg-gray-800 shadow-sm rounded-xl border border-gray-100 dark:border-gray-700 p-6 flex flex-col min-h-[400px]">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-lg font-medium text-gray-900 dark:text-white">Market Trend Analysis</h2>
-              <select className="bg-gray-50 dark:bg-gray-700 border-gray-200 dark:border-gray-600 text-gray-700 dark:text-gray-200 text-sm rounded-lg focus:ring-indigo-500 focus:border-indigo-500 block p-2">
+        <div className="lg:col-span-2 space-y-8">
+          <div className="glass-panel rounded-3xl p-6 sm:p-8 flex flex-col min-h-[400px]">
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-xl font-bold text-slate-900 dark:text-white">Market Trend Analysis</h2>
+              <select className="bg-white/50 dark:bg-slate-800/50 backdrop-blur-md border border-slate-200/50 dark:border-slate-700/50 text-slate-700 dark:text-slate-200 text-sm font-medium rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 block px-4 py-2 shadow-sm">
                 <option>Last 30 days</option>
               </select>
             </div>
-            <div className="flex-1">
+            <div className="flex-1 rounded-2xl overflow-hidden">
               <MarketTrendChart />
             </div>
           </div>
           
-          <div className="bg-white dark:bg-gray-800 shadow-sm rounded-xl border border-gray-100 dark:border-gray-700 p-6 flex flex-col min-h-[400px]">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-lg font-medium text-gray-900 dark:text-white">Top 10 Volume (24h)</h2>
+          <div className="glass-panel rounded-3xl p-6 sm:p-8 flex flex-col min-h-[400px]">
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-xl font-bold text-slate-900 dark:text-white">Top 10 Volume (24h)</h2>
             </div>
-            <div className="flex-1">
+            <div className="flex-1 rounded-2xl overflow-hidden">
               <TopVolumeChart />
             </div>
           </div>
         </div>
 
         {/* Right Sidebar Area */}
-        <div className="space-y-6">
+        <div className="space-y-8">
           {/* Top Gainers */}
-          <div className="bg-white dark:bg-gray-800 shadow-sm rounded-xl border border-gray-100 dark:border-gray-700 p-6">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-lg font-medium text-gray-900 dark:text-white flex items-center">
-                <TrendingUp className="w-5 h-5 mr-2 text-emerald-500" />
+          <div className="glass-panel rounded-3xl p-6 sm:p-8 relative overflow-hidden">
+            <div className="absolute -top-24 -right-24 w-48 h-48 bg-emerald-500/10 rounded-full blur-[60px] pointer-events-none"></div>
+            
+            <div className="flex items-center justify-between mb-6 relative z-10">
+              <h2 className="text-lg font-bold text-slate-900 dark:text-white flex items-center">
+                <div className="p-1.5 bg-emerald-500/10 text-emerald-500 rounded-lg mr-3">
+                  <TrendingUp className="w-5 h-5" />
+                </div>
                 Top Performers
               </h2>
-              <Link to="/market" className="text-sm font-medium text-indigo-600 dark:text-indigo-400 hover:text-indigo-500">
+              <Link to="/market" className="text-sm font-bold text-indigo-600 dark:text-indigo-400 hover:text-indigo-500 transition-colors">
                 View all
               </Link>
             </div>
             
-            <div className="space-y-4">
+            <div className="space-y-3 relative z-10">
               {topGainers.length > 0 ? (
                 topGainers.map((coin, idx) => (
-                  <div key={coin._id || idx} className="flex items-center justify-between group cursor-pointer p-2 -mx-2 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
-                    <div className="flex items-center space-x-3">
-                      <div className="w-8 h-8 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white font-bold text-xs shadow-inner">
+                  <div key={coin._id || idx} className="flex items-center justify-between group cursor-pointer p-3 -mx-3 rounded-2xl hover:bg-slate-100/50 dark:hover:bg-slate-800/50 hover:shadow-md transition-all duration-300">
+                    <div className="flex items-center space-x-4">
+                      <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-slate-100 to-slate-200 dark:from-slate-800 dark:to-slate-700 flex items-center justify-center text-slate-700 dark:text-slate-300 font-black text-sm shadow-inner group-hover:scale-110 transition-transform duration-300">
                         {coin.symbol?.substring(0, 2).toUpperCase() || 'C'}
                       </div>
                       <div>
-                        <p className="text-sm font-medium text-gray-900 dark:text-white">{coin.name}</p>
-                        <p className="text-xs text-gray-500 dark:text-gray-400 uppercase">{coin.symbol}</p>
+                        <p className="text-sm font-bold text-slate-900 dark:text-white leading-tight">{coin.name}</p>
+                        <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase mt-0.5">{coin.symbol}</p>
                       </div>
                     </div>
                     <div className="text-right">
-                      <p className="text-sm font-semibold text-gray-900 dark:text-white">{formatCurrency(coin.price)}</p>
-                      <p className="text-xs font-medium text-emerald-500 flex items-center justify-end">
+                      <p className="text-sm font-black text-slate-900 dark:text-white leading-tight">{formatCurrency(coin.price)}</p>
+                      <p className="text-xs font-bold text-emerald-500 flex items-center justify-end mt-0.5 bg-emerald-500/10 px-1.5 py-0.5 rounded-md inline-flex">
                         <ArrowUpRight className="w-3 h-3 mr-0.5" />
                         {coin.percentage_change_24h?.toFixed(2)}%
                       </p>
@@ -215,24 +215,25 @@ const Dashboard = () => {
                   </div>
                 ))
               ) : (
-                <div className="text-sm text-gray-500 dark:text-gray-400 text-center py-4">No data available</div>
+                <div className="text-sm font-medium text-slate-500 dark:text-slate-400 text-center py-8 bg-slate-50 dark:bg-slate-800/50 rounded-2xl border border-dashed border-slate-200 dark:border-slate-700">No data available</div>
               )}
             </div>
           </div>
 
           {/* Portfolio Summary Placeholder */}
-          <div className="bg-gradient-to-br from-indigo-600 to-purple-700 shadow-md rounded-xl p-6 text-white relative overflow-hidden">
-            <div className="absolute -right-6 -top-6 opacity-20">
-              <Wallet className="w-32 h-32" />
+          <div className="bg-gradient-to-br from-indigo-600 via-purple-600 to-indigo-800 shadow-xl shadow-indigo-500/20 rounded-3xl p-8 text-white relative overflow-hidden group">
+            <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-10 mix-blend-overlay"></div>
+            <div className="absolute -right-10 -top-10 opacity-10 transform group-hover:rotate-12 group-hover:scale-110 transition-all duration-700">
+              <Wallet className="w-48 h-48" />
             </div>
             <div className="relative z-10">
-              <h2 className="text-lg font-medium text-indigo-100 mb-1">My Portfolio</h2>
-              <p className="text-3xl font-bold mb-4">$0.00</p>
-              <div className="flex gap-2">
-                <button className="flex-1 bg-white/20 hover:bg-white/30 transition-colors py-2 px-4 rounded-lg text-sm font-medium backdrop-blur-sm">
+              <h2 className="text-sm font-bold text-indigo-100 uppercase tracking-wider mb-2 opacity-80">My Portfolio</h2>
+              <p className="text-4xl font-black mb-8 tracking-tight drop-shadow-sm">$0.00</p>
+              <div className="flex gap-3">
+                <button className="flex-1 bg-white/20 hover:bg-white/30 transition-colors py-3 px-4 rounded-xl text-sm font-bold backdrop-blur-md border border-white/20 shadow-sm">
                   Deposit
                 </button>
-                <button className="flex-1 bg-white hover:bg-gray-50 text-indigo-600 transition-colors py-2 px-4 rounded-lg text-sm font-medium shadow-sm">
+                <button className="flex-1 bg-white hover:bg-indigo-50 text-indigo-700 transition-colors py-3 px-4 rounded-xl text-sm font-bold shadow-lg shadow-white/10">
                   Simulate
                 </button>
               </div>
