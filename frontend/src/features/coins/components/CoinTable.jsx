@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import { getCoins } from '../../../services/coinService';
 import { ArrowUp, ArrowDown, ArrowUpDown, ChevronLeft, ChevronRight, Loader2, Star } from 'lucide-react';
 import toast from 'react-hot-toast';
@@ -163,21 +164,21 @@ const CoinTable = () => {
                     {coin.rank || '-'}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="flex items-center">
+                    <Link to={`/coins/${coin._id || coin.id}`} className="flex items-center group-hover:opacity-80 transition-opacity">
                       <div className="flex-shrink-0 h-8 w-8 rounded-full bg-gradient-to-br from-indigo-100 to-purple-200 dark:from-indigo-900/50 dark:to-purple-900/50 flex items-center justify-center shadow-inner border border-white/20">
                         <span className="text-xs font-bold text-indigo-700 dark:text-indigo-300">
                           {coin.symbol?.substring(0, 1).toUpperCase()}
                         </span>
                       </div>
                       <div className="ml-4">
-                        <div className="text-sm font-bold text-gray-900 dark:text-white">
+                        <div className="text-sm font-bold text-gray-900 dark:text-white group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">
                           {coin.name}
                         </div>
                         <div className="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wider font-medium">
                           {coin.symbol}
                         </div>
                       </div>
-                    </div>
+                    </Link>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-right font-medium text-gray-900 dark:text-white">
                     {formatCurrency(coin.price)}

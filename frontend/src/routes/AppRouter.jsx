@@ -13,6 +13,7 @@ import { ROLES } from '../utils/constants';
 
 import NotFound from '../pages/public/NotFound';
 import MarketOverview from '../pages/public/MarketOverview';
+import CoinDetail from '../pages/public/CoinDetail';
 
 const AppRouter = () => {
   return (
@@ -29,6 +30,7 @@ const AppRouter = () => {
           {/* User Routes */}
           <Route path="/" element={<Dashboard />} />
           <Route path="/market" element={<MarketOverview />} />
+          <Route path="/coins/:id" element={<CoinDetail />} />
           {/* Admin Routes */}
           <Route element={<RoleRoute allowedRoles={[ROLES.ADMIN]} />}>
             <Route path="/admin" element={<AdminDashboard />} />
