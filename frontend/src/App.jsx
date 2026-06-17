@@ -1,13 +1,16 @@
 import { BrowserRouter } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
 import AppRouter from './routes/AppRouter';
+import ErrorBoundary from './components/common/ErrorBoundary';
 
 function App() {
   return (
-    <BrowserRouter>
-      <Toaster position="top-right" />
-      <AppRouter />
-    </BrowserRouter>
+    <ErrorBoundary>
+      <BrowserRouter>
+        <Toaster position="top-right" />
+        <AppRouter />
+      </BrowserRouter>
+    </ErrorBoundary>
   );
 }
 

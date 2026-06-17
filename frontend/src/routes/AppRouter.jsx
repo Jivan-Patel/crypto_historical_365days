@@ -11,6 +11,8 @@ import Dashboard from '../pages/public/Dashboard';
 import AdminDashboard from '../pages/admin/AdminDashboard';
 import { ROLES } from '../utils/constants';
 
+import NotFound from '../pages/public/NotFound';
+
 const AppRouter = () => {
   return (
     <Routes>
@@ -34,7 +36,7 @@ const AppRouter = () => {
       </Route>
 
       {/* Fallback */}
-      <Route path="*" element={<Navigate to="/" replace />} />
+      <Route path="*" element={<NotFound />} />
     </Routes>
   );
 };
