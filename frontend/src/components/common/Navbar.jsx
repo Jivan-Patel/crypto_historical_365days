@@ -1,11 +1,23 @@
-import { Menu } from 'lucide-react';
+import { Menu, Search } from 'lucide-react';
 import { useDispatch } from 'react-redux';
+import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { setSidebarOpen } from '../../store/slices/uiSlice';
 import ThemeToggle from './ThemeToggle';
 import UserDropdown from './UserDropdown';
 
 const Navbar = () => {
   const dispatch = useDispatch();
+  const navigate = useNavigate();
+  const [searchQuery, setSearchQuery] = useState('');
+
+  const handleSearchSubmit = (e) => {
+    e.preventDefault();
+    if (searchQuery.trim()) {
+      navigate(`/search?q=${encodeURIComponent(searchQuery.trim())}`);
+      setSearchQuery('');
+    }
+  };
 
   return (
     <header className="sticky top-0 z-30 flex-shrink-0 flex h-16 bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800 shadow-sm transition-colors duration-200">
@@ -21,9 +33,20 @@ const Navbar = () => {
           </button>
         </div>
         
-        <div className="flex-1 flex justify-center md:justify-start px-2 lg:ml-6">
+        <div className="flex-1 flex items-center justify-center md:justify-start px-2 lg:ml-6">
           <div className="max-w-lg w-full lg:max-w-xs flex items-center">
-            {/* Optional Global Search Input could go here */}
+            <form onSubmit={handleSearchSubmit} className="relative w-full">
+              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                <Search className="h-4 w-4 text-gray-400" aria-hidden="true" />
+              </div>
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="block w-full pl-10 pr-3 py-2 border border-gray-300 dark:border-gray-700 rounded-md leading-5 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm transition-colors"
+                placeholder="Search assets..."
+              />
+            </form>
           </div>
         </div>
         

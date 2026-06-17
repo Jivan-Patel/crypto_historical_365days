@@ -15,6 +15,8 @@ import NotFound from '../pages/public/NotFound';
 import MarketOverview from '../pages/public/MarketOverview';
 import CoinDetail from '../pages/public/CoinDetail';
 import Portfolio from '../pages/public/Portfolio';
+import CoinSearch from '../pages/public/CoinSearch';
+import Screener from '../pages/public/Screener';
 
 const AppRouter = () => {
   return (
@@ -33,6 +35,8 @@ const AppRouter = () => {
           <Route path="/market" element={<MarketOverview />} />
           <Route path="/portfolio" element={<Portfolio />} />
           <Route path="/coins/:id" element={<CoinDetail />} />
+          <Route path="/search" element={<CoinSearch />} />
+          <Route path="/screener" element={<Screener />} />
           {/* Admin Routes */}
           <Route element={<RoleRoute allowedRoles={[ROLES.ADMIN]} />}>
             <Route path="/admin" element={<AdminDashboard />} />
