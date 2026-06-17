@@ -12,6 +12,7 @@ import AdminDashboard from '../pages/admin/AdminDashboard';
 import { ROLES } from '../utils/constants';
 
 import NotFound from '../pages/public/NotFound';
+import MarketOverview from '../pages/public/MarketOverview';
 
 const AppRouter = () => {
   return (
@@ -27,7 +28,7 @@ const AppRouter = () => {
         <Route element={<DashboardLayout />}>
           {/* User Routes */}
           <Route path="/" element={<Dashboard />} />
-          
+          <Route path="/market" element={<MarketOverview />} />
           {/* Admin Routes */}
           <Route element={<RoleRoute allowedRoles={[ROLES.ADMIN]} />}>
             <Route path="/admin" element={<AdminDashboard />} />
