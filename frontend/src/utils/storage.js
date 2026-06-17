@@ -46,3 +46,7 @@ export const clearAuthStorage = () => {
   removeToken();
   removeStoredUser();
 };
+
+// --- Theme helpers ---
+export const getStoredTheme = () => getLocal(THEME_KEY, 'light');
+export const setStoredTheme = (theme) => setLocal(THEME_KEY, theme);
