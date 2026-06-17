@@ -3,6 +3,8 @@ import { TrendingUp, TrendingDown, Activity, DollarSign, BarChart3, Clock, Arrow
 import { getMarketSummary, getTopGainers } from '../../services/statsService';
 import toast from 'react-hot-toast';
 import { Link } from 'react-router-dom';
+import MarketTrendChart from '../../features/dashboard/components/MarketTrendChart';
+import TopVolumeChart from '../../features/dashboard/components/TopVolumeChart';
 
 const Dashboard = () => {
   const [marketStats, setMarketStats] = useState(null);
@@ -153,20 +155,25 @@ const Dashboard = () => {
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Main Content Area / Chart Placeholder */}
-        <div className="lg:col-span-2 bg-white dark:bg-gray-800 shadow-sm rounded-xl border border-gray-100 dark:border-gray-700 p-6 flex flex-col min-h-[400px]">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-lg font-medium text-gray-900 dark:text-white">Market Trend Analysis</h2>
-            <select className="bg-gray-50 dark:bg-gray-700 border-gray-200 dark:border-gray-600 text-gray-700 dark:text-gray-200 text-sm rounded-lg focus:ring-indigo-500 focus:border-indigo-500 block p-2">
-              <option>Last 7 days</option>
-              <option>Last 30 days</option>
-              <option>Last 3 months</option>
-              <option>Last 1 year</option>
-            </select>
+        <div className="lg:col-span-2 space-y-6">
+          <div className="bg-white dark:bg-gray-800 shadow-sm rounded-xl border border-gray-100 dark:border-gray-700 p-6 flex flex-col min-h-[400px]">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-lg font-medium text-gray-900 dark:text-white">Market Trend Analysis</h2>
+              <select className="bg-gray-50 dark:bg-gray-700 border-gray-200 dark:border-gray-600 text-gray-700 dark:text-gray-200 text-sm rounded-lg focus:ring-indigo-500 focus:border-indigo-500 block p-2">
+                <option>Last 30 days</option>
+              </select>
+            </div>
+            <div className="flex-1">
+              <MarketTrendChart />
+            </div>
           </div>
-          <div className="flex-1 flex items-center justify-center border-2 border-dashed border-gray-200 dark:border-gray-700 rounded-lg bg-gray-50 dark:bg-gray-900/50">
-            <div className="text-center">
-              <LineChart className="mx-auto h-12 w-12 text-gray-400" />
-              <p className="mt-2 text-sm font-medium text-gray-500 dark:text-gray-400">Recharts integration pending (PR-11)</p>
+          
+          <div className="bg-white dark:bg-gray-800 shadow-sm rounded-xl border border-gray-100 dark:border-gray-700 p-6 flex flex-col min-h-[400px]">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-lg font-medium text-gray-900 dark:text-white">Top 10 Volume (24h)</h2>
+            </div>
+            <div className="flex-1">
+              <TopVolumeChart />
             </div>
           </div>
         </div>
