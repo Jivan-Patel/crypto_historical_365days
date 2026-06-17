@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, ArrowUpRight, ArrowDownRight, Globe, Github, Info, Loader2, Star } from 'lucide-react';
+import { ArrowLeft, ArrowUpRight, ArrowDownRight, Globe, Code, Info, Loader2, Star } from 'lucide-react';
 import { getCoinById } from '../../services/coinService';
 import toast from 'react-hot-toast';
 import HistoricalChart from '../../features/coins/components/HistoricalChart';
@@ -147,7 +147,7 @@ const CoinDetail = () => {
                 Website
               </button>
               <button className="inline-flex items-center px-4 py-2 text-sm font-medium rounded-lg text-gray-700 bg-gray-50 hover:bg-gray-100 dark:text-gray-200 dark:bg-gray-900 dark:hover:bg-gray-700 transition-colors">
-                <Github className="w-4 h-4 mr-2 text-gray-400" />
+                <Code className="w-4 h-4 mr-2 text-gray-400" />
                 Source Code
               </button>
             </div>

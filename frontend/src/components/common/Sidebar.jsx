@@ -7,7 +7,6 @@ import { setSidebarOpen } from '../../store/slices/uiSlice';
 const navItems = [
   { name: 'Dashboard', path: '/', icon: LayoutDashboard, roles: [ROLES.USER, ROLES.ADMIN] },
   { name: 'Market Overview', path: '/market', icon: LineChart, roles: [ROLES.USER, ROLES.ADMIN] },
-  { name: 'Analytics', path: '/analytics', icon: Activity, roles: [ROLES.USER, ROLES.ADMIN] },
   { name: 'Portfolio', path: '/portfolio', icon: Wallet, roles: [ROLES.USER, ROLES.ADMIN] },
   { name: 'Coin Search', path: '/search', icon: Search, roles: [ROLES.USER, ROLES.ADMIN] },
   { name: 'Screener', path: '/screener', icon: SlidersHorizontal, roles: [ROLES.USER, ROLES.ADMIN] },
